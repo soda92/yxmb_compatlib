@@ -1,7 +1,14 @@
 # 通用设置
 [settings]
-  base_url = "http://127.0.0.1:8000"
   default_timeout = 30
+  expiration_date = "2099-02-22" # 软件过期日期
+
+# 用户凭据（通常由 admin.txt 提供）
+[credentials]
+  url = ""
+  username = ""
+  password = ""
+  department_name = ""
 
 # 登录页面
 [login]
