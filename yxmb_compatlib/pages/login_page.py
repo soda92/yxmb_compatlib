@@ -1,9 +1,8 @@
-import time
 import ddddocr
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
+from selenium.common.exceptions import TimeoutException
 from .locator import Locator
 
 class LoginPage:
@@ -21,10 +20,10 @@ class LoginPage:
             'username': Locator(*login_cfg['username']),
             'password': Locator(*login_cfg['password']),
             'login_button': Locator(*login_cfg['login_button']),
-            'captcha_image': Locator(*login_cfg.get('captcha', [None, None])),
+            'captcha_image': Locator(*login_cfg.get('captcha_image', [None, None])),
             'captcha_input': Locator(*login_cfg.get('captcha_input', [None, None])),
-            'department_button': Locator(*login_cfg.get('department_button', [None, None])),
-            'health_record_menu': Locator(*self.config.get('home', {}).get('health_record_menu', [None, None]))
+            'department_button': Locator(*login_cfg.get('department_button', [None, None]))
+            # health_record_menu 已移至 post_login_actions
         }
 
     def _find_element(self, locator: Locator):
@@ -78,9 +77,7 @@ class LoginPage:
 
     def execute_login(self, username, password, department_name=None):
         """执行完整的登录流程。"""
-        self._handle_alert()
         self._send_keys(self.locators['username'], username)
-        self._handle_alert() # 输入用户名后可能也有弹窗
         self._send_keys(self.locators['password'], password)
 
         if self.has_captcha():
@@ -101,17 +98,38 @@ class LoginPage:
         self._handle_alert()
 
     def navigate_after_login(self):
-        """登录成功后，切换窗口并导航到指定菜单。"""
-        # 切换到新窗口
-        if len(self.driver.window_handles) > 1:
-            self.driver.switch_to.window(self.driver.window_handles[-1])
-            self.driver.maximize_window()
+        """登录成功后，根据配置执行一系列操作。"""
+        post_login_actions = self.config.get('login', {}).get('post_login_actions', [])
 
-        # 点击菜单项
-        if self.locators['health_record_menu'].by:
+        for action in post_login_actions:
+            action_type = action.get('type')
+            description = action.get('description', '未知操作')
+            is_optional = action.get('optional', False)
+            
+            print(f"执行操作: {description} (类型: {action_type})")
+
             try:
-                self._click_element(self.locators['health_record_menu'])
-            except TimeoutException:
-                print("未找到'健康档案'菜单或类似按钮。")
-        
-        self._handle_alert()
+                if action_type == 'switch_window':
+                    if len(self.driver.window_handles) > 1:
+                        self.driver.switch_to.window(self.driver.window_handles[-1])
+                elif action_type == 'maximize_window':
+                    self.driver.maximize_window()
+                elif action_type == 'handle_alert':
+                    self._handle_alert()
+                elif action_type == 'click':
+                    locator_data = action.get('locator')
+                    if locator_data:
+                        locator = Locator(*locator_data)
+                        self._click_element(locator)
+                else:
+                    print(f"警告: 未知的操作类型 '{action_type}'")
+
+            except TimeoutException as e:
+                if is_optional:
+                    print(f"警告: 可选操作 '{description}' 失败，元素未找到。继续执行...")
+                else:
+                    print(f"错误: 执行操作 '{description}' 失败。")
+                    raise e # 如果不是可选的，则抛出异常
+            except Exception as e:
+                print(f"错误: 执行操作 '{description}' 时发生意外错误: {e}")
+                raise e
