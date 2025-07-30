@@ -1,6 +1,7 @@
 # 通用设置
 [settings]
   default_timeout = 30
+  login_retries = 4 # 登录失败时的重试次数
   expiration_date = "2099-02-22" # 软件过期日期
 
 # 用户凭据（通常由 admin.txt 提供）
