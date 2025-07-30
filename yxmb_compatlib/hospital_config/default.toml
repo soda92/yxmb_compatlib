@@ -1,0 +1,22 @@
+# 登录页面
+[login]
+  username = ["id", "j_username"]
+  password = ["id", "j_password"]
+  captcha = ["id", "img"]
+  login_button = ["css_selector", ".submit-btn"]
+
+# 主页元素
+[home]
+  patient_list_menu = "a[href*='/patient/list']"
+  add_patient_button = "button#add-patient"
+
+# 患者列表页面
+[patient_list]
+  search_input = "input[name='query']"
+  search_button = "button.search"
+  first_patient_in_list = "table.patients tbody tr:first-child"
+
+# 通用设置
+[settings]
+  base_url = "http://127.0.0.1:8000"
+  default_timeout = 30
