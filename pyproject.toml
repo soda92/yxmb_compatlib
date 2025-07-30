@@ -1,6 +1,6 @@
 [project]
 name = "yxmb-compatlib"
-version = "2025.7.30.4"
+version = "2025.7.30.5"
 description = "支持原地升级的宇信慢病兼容库"
 readme = "README.md"
 authors = [
