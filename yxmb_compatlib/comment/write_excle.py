@@ -1,9 +1,21 @@
 import csv
+import logging
 import os
 from openpyxl import load_workbook, Workbook
 
 
 def excel_append(file_path, column_header1, content1, column_header2, content2):
+    """
+    功能：向指定的Excel（.xlsx）或CSV文件的指定两列表头下追加内容。
+    - 如果对应列有空白单元格，则填入内容；
+    - 如果没有空白，则在文件末尾新增一行并写入内容。
+    参数:
+        file_path: 文件路径（支持.xlsx和.csv）
+        column_header1: 第一个目标列的表头
+        content1: 第一个目标列要写入的内容
+        column_header2: 第二个目标列的表头
+        content2: 第二个目标列要写入的内容
+    """
     # 检查文件扩展名
     file_extension = os.path.splitext(file_path)[1].lower()
 
@@ -19,15 +31,17 @@ def excel_append(file_path, column_header1, content1, column_header2, content2):
 
         # 从第一行开始，向下查找直到找到两个空白单元格中的一个
         for row in range(1, sheet.max_row + 1):
-            if not sheet.cell(row=row, column=column_index1).value or not sheet.cell(row=row,
-                                                                                     column=column_index2).value:
+            if (
+                not sheet.cell(row=row, column=column_index1).value
+                or not sheet.cell(row=row, column=column_index2).value
+            ):
                 # 找到空白单元格，跳出循环
                 break
         else:
             # 如果所有单元格都不为空，则在最后一行之后添加新行
             row = sheet.max_row + 1
 
-        # 如果内容是列表，则将其转换为一个字符串
+        # 如果内容是列表，则将其转换为字符串
         if isinstance(content1, list):
             content1 = '\n'.join(content1)
         if isinstance(content2, list):
@@ -66,9 +80,11 @@ def excel_append(file_path, column_header1, content1, column_header2, content2):
                 break
 
         if row_to_write is not None:
+            # 找到空白行，写入内容
             reader[row_to_write][column_index1] = content1
             reader[row_to_write][column_index2] = content2
         else:
+            # 没有空白行，新增一行
             new_row = [''] * (len(headers))
             new_row[column_index1] = content1
             new_row[column_index2] = content2
@@ -80,16 +96,28 @@ def excel_append(file_path, column_header1, content1, column_header2, content2):
             writer.writerows(reader)
 
     else:
-        raise ValueError("Unsupported file format. Only .xlsx and .csv are supported.")
+        raise ValueError('Unsupported file format. Only .xlsx and .csv are supported.')
+
 
 # 调用函数示例
 # excel_append("执行结果/查询结果.csv", "身份证号", sfzh, "签约信息", text)
 
 
 def excel_append2(file_path, column_headers, contents):
+    """
+    功能：向指定的Excel（.xlsx）或CSV文件追加一整行数据。
+    - 如果文件不存在则新建文件并写入表头；
+    - 如果文件已存在则直接追加数据行。
+    参数:
+        file_path: 文件路径（支持.xlsx和.csv）
+        column_headers: 列表，表头
+        contents: 列表，要写入的数据内容
+    """
     # 检查输入数据长度一致性
     if len(column_headers) != len(contents):
-        raise ValueError("The number of column headers must match the number of contents.")
+        raise ValueError(
+            'The number of column headers must match the number of contents.'
+        )
 
     file_extension = os.path.splitext(file_path)[1].lower()
 
@@ -107,7 +135,7 @@ def excel_append2(file_path, column_headers, contents):
         # 将新内容写入新的一行
         sheet.append(contents)
         workbook.save(file_path)
-        print(f"已将数据追加至 {file_path}")
+        logging.info(f'已将数据追加至 {file_path}')
 
     elif file_extension == '.csv':
         # 检查CSV文件是否已存在
@@ -122,8 +150,7 @@ def excel_append2(file_path, column_headers, contents):
 
             # 写入内容
             writer.writerow(contents)
-        print(f"已将数据追加至 {file_path}")
+        logging.info(f'已将数据追加至 {file_path}')
 
     else:
-        raise ValueError("Unsupported file format. Only .xlsx and .csv are supported.")
-
+        raise ValueError('Unsupported file format. Only .xlsx and .csv are supported.')
