@@ -1,0 +1,7 @@
+captcha: true
+
+login:
+  username: "input[name='username']"
+  password: "input[name='password']"
+  captcha: "input[name='captcha']"
+  login_button: "button[type='submit']"
