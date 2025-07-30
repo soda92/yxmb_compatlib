@@ -38,3 +38,15 @@
     { type = "handle_alert" },
     { type = "click", locator = ["xpath", "//*[@id='button-1005-btnIconEl']"], description = "关闭可能出现的弹窗", optional = true }
   ]
+
+# 引入用药
+[medicine]
+  name_similarity_threshold = 0.8 # 药品名称相似度阈值
+
+# 数据验证配置
+[validation]
+  # 定义用于查找日期的列名，按优先级顺序排列
+  date_columns = ["随访日期", "成功", "日期"]
+
+  # 是否启用身份证严格校验
+  strict_id_check = true
