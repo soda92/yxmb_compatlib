@@ -1,0 +1,2 @@
+login.username = ["id", "phisname"]
+login.password = ["id", "password"]
