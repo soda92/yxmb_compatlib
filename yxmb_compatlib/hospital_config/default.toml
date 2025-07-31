@@ -1,3 +1,5 @@
+pinyin = ""
+
 # 通用设置
 [settings]
   default_timeout = 30
@@ -50,3 +52,10 @@
 
   # 是否启用身份证严格校验
   strict_id_check = true
+
+# 菜单配置
+[menus]
+  # 定义菜单ID映射
+  "体检服务" = "menu_5_1"
+  "慢病随访" = "menu_3_3"
+  "普通随访" = "menu_3_1"
