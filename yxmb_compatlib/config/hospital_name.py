@@ -7,6 +7,8 @@ import tomllib
 # 假设 check_name 函数已在别处定义，或者我们可以像这样简单定义它：
 def check_name(name: str, text: str) -> bool:
     """检查一个名称是否存在于文本中。"""
+    name = name.replace('-', '').replace('_', '').lower()
+    text = text.replace('-', '').replace('_', '').lower()
     return name in text
 
 
