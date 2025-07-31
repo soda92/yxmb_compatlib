@@ -33,6 +33,10 @@ class LoginPage:
         self.login_retries = settings_cfg.get('login_retries', 4)
         self.ignore_department_selection = settings_cfg.get('ignore_department', False) # 读取新设置
 
+    def _sanitize_url(self, url: str) -> str:
+        """移除URL中的jsessionid等部分，以便进行可靠的比较。"""
+        return url.split(';')[0]
+
     def _find_element(self, locator: Locator):
         """使用WebDriverWait查找元素。"""
         return self.wait.until(EC.visibility_of_element_located(locator.to_tuple()))
@@ -141,7 +145,7 @@ class LoginPage:
                 print(f"错误: 执行操作 '{description}' 时发生意外错误: {e}")
                 raise e
 
-    def login_with_retries(self, url: str, username: str, password: str, department_name: str = None):
+    def login_with_retries(self, url: str, username: str, password:str, department_name: str = None):
         """
         执行完整的登录流程，包含重试和成功验证。
         """
@@ -150,14 +154,15 @@ class LoginPage:
                 logging.info(f"开始第 {attempt + 1}/{self.login_retries + 1} 次登录尝试...")
                 self.driver.get(url)
                 self.driver.maximize_window()
-                initial_url = self.driver.current_url
+                # 获取并清理初始URL
+                initial_url = self._sanitize_url(self.driver.current_url)
 
                 # 执行登录操作（填写表单，点击按钮）
                 self.execute_login(username, password, department_name)
 
-                # 验证登录是否成功（通过URL是否改变）
+                # 验证登录是否成功（通过清理后的URL是否改变）
                 WebDriverWait(self.driver, self.login_timeout).until(
-                    lambda driver: driver.current_url != initial_url
+                    lambda driver: self._sanitize_url(driver.current_url) != initial_url
                 )
                 logging.info("URL已改变，登录验证成功。")
 
