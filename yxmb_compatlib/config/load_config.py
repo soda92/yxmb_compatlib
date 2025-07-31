@@ -4,6 +4,7 @@ import sys
 import shutil
 from collections.abc import Mapping
 from pathlib import Path
+from functools import lru_cache # 1. 导入 lru_cache
 
 
 def deep_merge(source, destination):
@@ -98,9 +99,11 @@ def _handle_external_config(hospital_name: str, config_dir: str):
         return None
 
 
+@lru_cache(maxsize=None) # 2. 添加装饰器
 def load_config():
     """
     加载并合并配置。
+    此函数的结果会被缓存，在程序单次运行中只执行一次。
     1. 加载 default.toml。
     2. 加载特定医院的 toml 文件并覆盖默认值。
     3. (打包模式下) 处理并加载外部的医院 toml 文件。

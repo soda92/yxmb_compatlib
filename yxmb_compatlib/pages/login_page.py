@@ -14,6 +14,7 @@ class LoginPage:
         self.driver = driver
         self.config = config
         self.timeout = config.get('settings', {}).get('default_timeout', 10)
+        self.login_timeout = config.get('settings', {}).get('login_timeout', 5)
         self.wait = WebDriverWait(self.driver, self.timeout)
 
         # 从配置中加载定位符
@@ -153,7 +154,7 @@ class LoginPage:
                 self.execute_login(username, password, department_name)
 
                 # 验证登录是否成功（通过URL是否改变）
-                WebDriverWait(self.driver, self.timeout).until(
+                WebDriverWait(self.driver, self.login_timeout).until(
                     lambda driver: driver.current_url != initial_url
                 )
                 logging.info("URL已改变，登录验证成功。")

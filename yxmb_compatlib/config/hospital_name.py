@@ -9,6 +9,7 @@ def check_name(name: str, text: str) -> bool:
     """检查一个名称是否存在于文本中。"""
     return name in text
 
+
 def get_hospital_name() -> str:
     """
     获取医院名称，按以下顺序检测：
