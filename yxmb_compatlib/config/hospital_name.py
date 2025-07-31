@@ -59,6 +59,9 @@ def get_hospital_name() -> str:
 
     # 3. 从父文件夹名称检测
     parent_dir_name = Path(sys.executable).parent.name.lower() # 转为小写
+    if parent_dir_name == "scripts":
+        # 如果是 scripts 文件夹，使用上一级目录的名称
+        parent_dir_name = Path(sys.executable).parent.parent.name.lower()
     detection_sources.append(
         (parent_dir_name, "从文件夹名称检测到医院: {}")
     )
