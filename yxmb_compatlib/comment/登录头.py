@@ -9,7 +9,7 @@ import os
 from .envWrite import env_write
 
 # 检查是否需要重置已完成数量
-if os.getenv("reset_finished_count") == "1":
+if os.getenv("reset_finished_count", False):
     env_write('执行结果/env.txt', 3, f'已完成数量:0')
 
 def is_software_expired(config: dict = None):
