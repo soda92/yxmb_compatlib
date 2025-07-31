@@ -4,9 +4,9 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 
-from comment.excle_write import excel_append2
-from compements.assemblies.check_sf_date import check_sf_date
-from compements.tool import parse_date
+from yxmb_compatlib.comment.excle_write import excel_append2
+from yxmb_compatlib.compements.assemblies.check_sf_date import check_sf_date
+from yxmb_compatlib.compements.tool import parse_date
 
 
 def quarterly_statistics(driver, sfzh, mz_time):

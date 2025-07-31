@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 
-from compements.tool import get_drink_amount
+from yxmb_compatlib.compements.tool import get_drink_amount
 
 
 def get_mb_data(driver):

@@ -1,6 +1,6 @@
 import random
 from datetime import datetime
-from compements.tool import get_nearest_previous_value
+from yxmb_compatlib.compements.tool import get_nearest_previous_value
 
 
 # 函数：根据不同优先级选择数据
@@ -211,64 +211,82 @@ def get_new_sf_data(mb_data, mz_data, tj_data, n_sf_time, sf_data, sfzh):
     source = '门诊' if from_mz else '档案/体检'
     check_range('体重', weight, source)
 
-    # 收缩压
-    sbp, from_mz = select_data_for_field('收缩压', n_sf_time, mz_data, tj_data, mb_data)
-    sbp = int(float(sbp))
+    ## 重写收缩压和收张压逻辑
+    # --- 收缩压 (SBP) 和 舒张压 (DBP) 生成逻辑 ---
+
+    # 1. 获取并初步处理 SBP
+    sbp, from_mz_sbp = select_data_for_field('收缩压', n_sf_time, mz_data, tj_data, mb_data)
+    try:
+        sbp = int(float(sbp))
+    except (ValueError, TypeError):
+        sbp = random.randint(115, 138)  # 如果初始值无效，则赋一个默认随机值
+
     existing_systolic_values = {
         int(v['收缩压'])
         for date_str, v in sf_data.items()
-        if date_str.startswith(current_year)  # 添加年份过滤条件
-        and v['收缩压'] is not None
-        and v['收缩压'] != '未查'
+        if date_str.startswith(current_year)
+        and v.get('收缩压') not in [None, '未查']
     }
 
-    print('根据档案、门诊、体检选出的收缩压:', sbp)
-    print('以往随访的收缩压:', existing_systolic_values)
+    # 2. 验证并修正 SBP，确保它在一个允许生成有效 DBP 的合理范围内
+    # 如果初始 SBP 值重复或不在合理范围 (e.g., 110-140)，则重新生成
+    if sbp in existing_systolic_values or not (110 <= sbp <= 140):
+        print(f"SBP 值 {sbp} 重复或超出合理范围 [110-140]，将重新生成。")
+        possible_sbps = [s for s in range(115, 139) if s not in existing_systolic_values]
+        if possible_sbps:
+            sbp = random.choice(possible_sbps)
+        else:
+            # 如果所有值都用完了，就用一个边界值并记录
+            sbp = 138
+            print("警告: 年度内所有合理的 SBP 值均已使用，使用默认值 138。")
 
-    # if not from_mz:  # 如果数据不是来自门诊，才进行后续的判断和随机生成
-    if sbp in existing_systolic_values:
-        sbp = random.randint(115, 138)
-        while sbp in existing_systolic_values:
-            sbp = random.randint(115, 138)
-    # else:
-    #     sbp = sbp  # 数据来自门诊，直接使用
     selected_data['收缩压'] = sbp
-    source = '门诊' if from_mz else '档案/体检'
-    check_range('收缩压', sbp, source)
+    source_sbp = '门诊' if from_mz_sbp else '档案/体检'
+    check_range('收缩压', sbp, source_sbp)
+    print(f"最终确定的收缩压 (SBP): {sbp}")
 
-    # 舒张压
-    dbp, from_mz = select_data_for_field('舒张压', n_sf_time, mz_data, tj_data, mb_data)
-    dbp = int(float(dbp))
-    # existing_diastolic_values = {int(v['舒张压']) for v in sf_data.values() if
-    #                              v['舒张压'] is not None and v['舒张压'] != "未查"}
-
+    # 3. 基于最终的 SBP 生成 DBP
+    dbp, from_mz_dbp = select_data_for_field('舒张压', n_sf_time, mz_data, tj_data, mb_data)
     existing_diastolic_values = {
         int(v['舒张压'])
         for date_str, v in sf_data.items()
-        if date_str.startswith(current_year)  # 添加年份过滤条件
-        and v['舒张压'] is not None
-        and v['舒张压'] != '未查'
+        if date_str.startswith(current_year)
+        and v.get('舒张压') not in [None, '未查']
     }
 
-    print('根据档案、门诊、体检选出的舒张压:', dbp)
-    print('以往随访的舒张压:', existing_diastolic_values)
+    # 4. 定义 DBP 的有效范围
+    #    - 生理范围: 65-85
+    #    - 脉压差 (sbp - dbp) 范围: 30-50
+    min_dbp = max(65, sbp - 50)
+    max_dbp = min(85, sbp - 30)
 
-    # if not from_mz:  # 如果数据不是来自门诊，才进行后续的判断和随机生成
-    if dbp in existing_diastolic_values:
-        try:
-            min_diastolic = max(65, int(float(sbp)) - 60)
-            max_diastolic = min(85, int(float(sbp)))
-            dbp = random.randint(min_diastolic, max_diastolic)
-        except:
-            min_diastolic = 65
-            max_diastolic = 85
-        while dbp in existing_diastolic_values:
-            dbp = random.randint(min_diastolic, max_diastolic)
-    # else:
-    #     dbp = dbp  # 数据来自门诊，直接使用
-    selected_data['舒张压'] = dbp
-    source = '门诊' if from_mz else '档案/体检'
-    check_range('舒张压', dbp, source)
+    # 5. 查找一个有效且不重复的 DBP 值
+    # 从有效范围中排除已存在的值
+    possible_dbps = [d for d in range(min_dbp, max_dbp + 1) if d not in existing_diastolic_values]
+
+    if possible_dbps:
+        # 如果有可用值，从中随机选择一个
+        final_dbp = random.choice(possible_dbps)
+    else:
+        # 如果没有可用值（因为范围内的所有值都已被使用）
+        # 这是一个极端情况，我们放宽脉压差约束来寻找一个值
+        print(f"警告: 在理想脉压差范围内 [{min_dbp}-{max_dbp}] 未找到可用 DBP 值。正在尝试放宽约束...")
+        final_dbp = None
+        # 尝试在生理范围内寻找任何一个可用的值
+        broader_possible_dbps = [d for d in range(65, 86) if d not in existing_diastolic_values and d < sbp]
+        if broader_possible_dbps:
+            final_dbp = random.choice(broader_possible_dbps)
+        else:
+            # 如果仍然找不到，就使用一个默认值
+            final_dbp = 80
+            print("警告: 年度内所有合理的 DBP 值均已使用，使用默认值 80。")
+
+    selected_data['舒张压'] = final_dbp
+    source_dbp = '门诊' if from_mz_dbp else '档案/体检'
+    check_range('舒张压', final_dbp, source_dbp)
+    print(f"最终确定的舒张压 (DBP): {final_dbp}")
+
+    ## 重写结束 收缩压和收张压逻辑
 
     # 心率
     heart_rate, from_mz = select_data_for_field(

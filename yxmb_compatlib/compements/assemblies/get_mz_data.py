@@ -8,7 +8,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
-from comment.check_element import check_element
+from yxmb_compatlib.comment.check_element import check_element
 
 
 def adjust_values(new_data, all_previous_data):

@@ -8,9 +8,9 @@ from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.wait import WebDriverWait
 
-from comment.write_excle import excel_append
+from yxmb_compatlib.comment.write_excle import excel_append
 from phis_introducing_med.introducing_medication import introducing_medication
-from compements.tool import (
+from yxmb_compatlib.compements.tool import (
     update_exercise_time,
     update_staple_food,
     hypertension_assessment,

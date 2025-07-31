@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
 from selenium.webdriver.support.wait import WebDriverWait
 
-from compements.tool import parse_date
+from yxmb_compatlib.compements.tool import parse_date
 
 
 def get_sf_data(driver):

@@ -1,13 +1,15 @@
 import datetime
 import logging
-import time
 from selenium.webdriver.remote.webdriver import WebDriver
 from ..pages.login_page import LoginPage
 from ..config import load_config
+import time  # noqa: F401
 
 
-def is_software_expired(config: dict):
+def is_software_expired(config: dict = None):
     """检查软件是否过期。"""
+    if config is None:
+        config = load_config()
     # 从配置中获取过期日期，如果未设置则使用一个默认的未来日期
     expiration_date_str = config.get("settings", {}).get(
         "expiration_date", "2099-02-22"
