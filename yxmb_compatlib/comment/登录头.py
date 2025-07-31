@@ -3,7 +3,7 @@ import logging
 import time
 from selenium.webdriver.remote.webdriver import WebDriver
 from ..pages.login_page import LoginPage
-from ..config.merge_config import load_config
+from ..config import load_config
 
 def is_software_expired(config: dict):
     """检查软件是否过期。"""
