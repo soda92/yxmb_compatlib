@@ -1,4 +1,6 @@
 import ddddocr
+import logging
+import time
 from selenium.webdriver.remote.webdriver import WebDriver
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -6,7 +8,7 @@ from selenium.common.exceptions import TimeoutException
 from .locator import Locator
 
 class LoginPage:
-    """封装登录页面的所有操作和元素。"""
+    """封装登录页面的所有操作和元素，包括重试逻辑。"""
 
     def __init__(self, driver: WebDriver, config: dict):
         self.driver = driver
@@ -25,6 +27,8 @@ class LoginPage:
             'department_button': Locator(*login_cfg.get('department_button', [None, None]))
             # health_record_menu 已移至 post_login_actions
         }
+
+        self.login_retries = config.get('settings', {}).get('login_retries', 4)
 
     def _find_element(self, locator: Locator):
         """使用WebDriverWait查找元素。"""
@@ -133,3 +137,44 @@ class LoginPage:
             except Exception as e:
                 print(f"错误: 执行操作 '{description}' 时发生意外错误: {e}")
                 raise e
+
+    def login_with_retries(self, url: str, username: str, password: str, department_name: str = None):
+        """
+        执行完整的登录流程，包含重试和成功验证。
+        """
+        for attempt in range(self.login_retries + 1):
+            try:
+                logging.info(f"开始第 {attempt + 1}/{self.login_retries + 1} 次登录尝试...")
+                self.driver.get(url)
+                self.driver.maximize_window()
+                initial_url = self.driver.current_url
+
+                # 执行登录操作（填写表单，点击按钮）
+                self.execute_login(username, password, department_name)
+
+                # 验证登录是否成功（通过URL是否改变）
+                WebDriverWait(self.driver, self.timeout).until(
+                    lambda driver: driver.current_url != initial_url
+                )
+                logging.info("URL已改变，登录验证成功。")
+
+                # 登录成功后，执行后续导航操作
+                self.navigate_after_login()
+
+                logging.info("登录流程完全成功。")
+                return  # 成功，退出函数
+
+            except TimeoutException:
+                logging.warning(f"登录尝试 {attempt + 1} 失败：页面在超时时间内未跳转。")
+                if attempt < self.login_retries:
+                    time.sleep(2)
+                else:
+                    logging.error("所有登录尝试均因超时失败。")
+                    raise Exception("登录失败：页面在多次尝试后仍未跳转。")
+            except Exception as e:
+                logging.warning(f"登录尝试 {attempt + 1} 失败，发生错误: {e}")
+                if attempt < self.login_retries:
+                    time.sleep(2)
+                else:
+                    logging.error("所有登录尝试均因发生未知错误而失败。")
+                    raise # 抛出最后一次的异常

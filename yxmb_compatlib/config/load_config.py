@@ -25,30 +25,39 @@ def deep_merge(source, destination):
 def _load_and_merge_credentials(config: dict, config_dir: str):
     """
     查找并加载 admin.txt 中的凭据，然后合并到配置中。
-    它会在配置目录的父目录（应用根目录）中寻找 admin.txt。
+    它会在当前工作目录的 '文档' 子目录中寻找 admin.txt。
     """
-    # config_dir 是 '.../hospital_config'，其父目录是应用根目录
     admin_txt_path = Path.cwd() / "文档" / "admin.txt"
 
     if not admin_txt_path.exists():
-        print("警告: 在应用根目录下未找到 'admin.txt'。将跳过凭据加载。")
+        print("警告: 在 '文档' 目录下未找到 'admin.txt'。将跳过凭据加载。")
         return config
 
     try:
         with open(admin_txt_path, "r", encoding="utf-8") as f:
-            lines = [line.strip() for line in f.readlines()]
-            if len(lines) >= 4:
-                # 确保 credentials 表存在
-                config.setdefault("credentials", {})
+            # 读取所有行并去除首尾空白，过滤掉空行
+            lines = [line.strip() for line in f if line.strip()]
 
-                # 将凭据合并到配置中
-                config["credentials"]["url"] = lines[0]
-                config["credentials"]["username"] = lines[1]
-                config["credentials"]["password"] = lines[2]
-                config["credentials"]["department_name"] = lines[3]
-                print(f"成功从 '{admin_txt_path}' 加载凭据。")
-            else:
-                print(f"警告: '{admin_txt_path}' 文件格式不正确，应至少包含4行。")
+        if len(lines) < 3:
+            print(f"警告: '{admin_txt_path}' 文件格式不正确，应至少包含3行（URL, 用户名, 密码）。")
+            return config
+
+        # 确保 credentials 表存在
+        config.setdefault("credentials", {})
+
+        # 分配凭据
+        config["credentials"]["url"] = lines[0]
+        config["credentials"]["username"] = lines[1]
+        config["credentials"]["password"] = lines[2]
+
+        # 处理可选的第四行（部门名称）
+        if len(lines) >= 4:
+            config["credentials"]["department_name"] = lines[3]
+            print(f"成功从 '{admin_txt_path}' 加载凭据。")
+        else:
+            config["credentials"]["department_name"] = None
+            print(f"成功从 '{admin_txt_path}' 加载凭据（无部门名称）。")
+
     except Exception as e:
         print(f"错误: 读取 '{admin_txt_path}' 时发生错误: {e}")
 
