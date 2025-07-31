@@ -6,6 +6,7 @@ pinyin = ""
   login_retries = 4 # 登录失败时的重试次数
   login_timeout = 5
   expiration_date = "2099-02-22" # 软件过期日期
+  ignore_department = true # 是否忽略科室选择
 
 # 用户凭据（通常由 admin.txt 提供）
 [credentials]

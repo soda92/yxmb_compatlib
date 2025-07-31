@@ -26,10 +26,12 @@ class LoginPage:
             'captcha_image': Locator(*login_cfg.get('captcha_image', [None, None])),
             'captcha_input': Locator(*login_cfg.get('captcha_input', [None, None])),
             'department_button': Locator(*login_cfg.get('department_button', [None, None]))
-            # health_record_menu 已移至 post_login_actions
         }
 
-        self.login_retries = config.get('settings', {}).get('login_retries', 4)
+        # 从 settings 中加载配置
+        settings_cfg = self.config.get('settings', {})
+        self.login_retries = settings_cfg.get('login_retries', 4)
+        self.ignore_department_selection = settings_cfg.get('ignore_department', False) # 读取新设置
 
     def _find_element(self, locator: Locator):
         """使用WebDriverWait查找元素。"""
@@ -91,14 +93,14 @@ class LoginPage:
 
         self._click_element(self.locators['login_button'])
 
-        # 登录后选择科室（如果需要）
-        if department_name and self.locators['department_button'].by:
+        # 登录后选择科室（如果需要且未被配置忽略）
+        if department_name and self.locators['department_button'].by and not self.ignore_department_selection:
             try:
                 # 更新定位符以包含科室名称
-                dep_locator = self.locators['department_button'].format(department_name)
+                dep_locator = self.locators['department_button'].format(name=department_name)
                 self._click_element(dep_locator)
             except TimeoutException:
-                print(f"未找到科室按钮: {department_name}")
+                logging.warning(f"未找到科室按钮: {department_name}")
 
         self._handle_alert()
 
