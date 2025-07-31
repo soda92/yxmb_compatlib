@@ -1,2 +1,3 @@
 pinyin = "guangning"
 login.captcha_enabled = false
+settings.ignore_department = false
