@@ -22,8 +22,9 @@ def get_hospital_name() -> str:
     检测时会同时匹配医院中文名及其 pinyin。
     """
     config_dir_path = Path(get_config_dir())
+    logging.debug(f"config dir: {get_config_dir()}")
     config_files = config_dir_path.glob("*.toml")
-    
+
     # 加载所有医院配置，获取名称和pinyin
     # 格式: [{'name': '广宁', 'pinyin': 'guangning'}]
     hospital_configs = []
@@ -72,12 +73,15 @@ def get_hospital_name() -> str:
         (cwd_path, "从当前工作目录检测到医院: {}")
     )
 
+    logging.debug(f"detection sources: {detection_sources}")
+    logging.debug(f"hospital configs: {hospital_configs}")
+
     # 遍历所有检测源
     for source_text, log_message in detection_sources:
         for hospital in hospital_configs:
             hospital_name = hospital['name']
             pinyin = hospital['pinyin']
-            
+
             # 检查中文名或pinyin是否存在于源文本中
             # 确保pinyin不为空
             if check_name(hospital_name, source_text) or (pinyin and check_name(pinyin, source_text)):
