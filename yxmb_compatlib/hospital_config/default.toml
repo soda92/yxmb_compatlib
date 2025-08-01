@@ -104,6 +104,7 @@ sbp = ["收缩压", "高压", "SBP", "systolic", "收缩压mmHg"]
 dbp = ["舒张压", "低压", "DBP", "diastolic", "舒张压mmHg"]
 heart_rate_cur = ["心率", "心率当前", "当前心率", "heart_rate", "hr", "心率次/分"]
 heart_rate_tar = ["目标心率", "心率目标", "target_heart_rate"]
+bmi_tar = ["目标体质指数(BMI)", "BMI目标", "target_bmi"]
 
 # 足背动脉搏动
 dorsalis_pedis_normal = ["足背动脉搏动触及正常", "足背动脉正常", "dorsalis_normal"]
