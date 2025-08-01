@@ -14,7 +14,7 @@ class LoginPage:
         self.driver = driver
         self.config = config
         self.timeout = config.get('settings', {}).get('default_timeout', 10)
-        self.login_timeout = config.get('settings', {}).get('login_timeout', 5)
+        self.login_timeout = config.get('settings', {}).get('login_timeout', 30)
         self.wait = WebDriverWait(self.driver, self.timeout)
 
         # 从配置中加载定位符
@@ -31,7 +31,7 @@ class LoginPage:
         # 从 settings 中加载配置
         settings_cfg = self.config.get('settings', {})
         self.login_retries = settings_cfg.get('login_retries', 4)
-        self.ignore_department_selection = settings_cfg.get('ignore_department', False) # 读取新设置
+        self.ignore_department_selection = settings_cfg.get('ignore_department', False)
 
     def _sanitize_url(self, url: str) -> str:
         """移除URL中的jsessionid等部分，以便进行可靠的比较。"""
@@ -58,12 +58,21 @@ class LoginPage:
             alert = self.driver.switch_to.alert
             alert.accept()
         except TimeoutException:
-            pass # 没有弹窗，正常继续
+            pass  # 没有弹窗，正常继续
+
+    def _check_login_success(self, initial_url: str) -> bool:
+        """检查是否已经登录成功，通过URL变化判断。"""
+        current_url = self._sanitize_url(self.driver.current_url)
+        if current_url != initial_url:
+            logging.info(f"检测到URL已改变: {initial_url} -> {current_url}")
+            return True
+        return False
 
     def has_captcha(self) -> bool:
         """检查登录页面是否有验证码。"""
         # 使用配置中的布尔值作为主要判断依据
-        if 'captcha' in self.config['login'] and self.config['login']['captcha'] is False:
+        captcha_enabled = self.config.get('login', {}).get('captcha_enabled', True)
+        if not captcha_enabled:
             return False
         
         # 如果配置为true或未配置，则检查元素是否存在
@@ -140,31 +149,48 @@ class LoginPage:
                     print(f"警告: 可选操作 '{description}' 失败，元素未找到。继续执行...")
                 else:
                     print(f"错误: 执行操作 '{description}' 失败。")
-                    raise e # 如果不是可选的，则抛出异常
+                    raise e
             except Exception as e:
                 print(f"错误: 执行操作 '{description}' 时发生意外错误: {e}")
                 raise e
 
-    def login_with_retries(self, url: str, username: str, password:str, department_name: str = None):
+    def login_with_retries(self, url: str, username: str, password: str, department_name: str = None):
         """
         执行完整的登录流程，包含重试和成功验证。
         """
         for attempt in range(self.login_retries + 1):
             try:
                 logging.info(f"开始第 {attempt + 1}/{self.login_retries + 1} 次登录尝试...")
-                self.driver.get(url)
                 self.driver.maximize_window()
+                self.driver.get(url)
+                
                 # 获取并清理初始URL
                 initial_url = self._sanitize_url(self.driver.current_url)
+                logging.info(f"初始URL: {initial_url}")
+
+                # 在重试之前，先检查是否已经登录成功
+                if attempt > 0:
+                    logging.info("重试前检查登录状态...")
+                    if self._check_login_success(initial_url):
+                        logging.info("检测到已经登录成功，跳过登录步骤")
+                        self.navigate_after_login()
+                        logging.info("登录流程完全成功。")
+                        return
 
                 # 执行登录操作（填写表单，点击按钮）
                 self.execute_login(username, password, department_name)
 
                 # 验证登录是否成功（通过清理后的URL是否改变）
-                WebDriverWait(self.driver, self.login_timeout).until(
+                # 增加超时时间以处理慢速页面跳转
+                extended_timeout = self.login_timeout + (attempt * 5)  # 每次重试增加5秒
+                logging.info(f"等待页面跳转，超时时间: {extended_timeout}秒")
+                
+                WebDriverWait(self.driver, extended_timeout).until(
                     lambda driver: self._sanitize_url(driver.current_url) != initial_url
                 )
-                logging.info("URL已改变，登录验证成功。")
+                
+                final_url = self._sanitize_url(self.driver.current_url)
+                logging.info(f"URL已改变，登录验证成功: {initial_url} -> {final_url}")
 
                 # 登录成功后，执行后续导航操作
                 self.navigate_after_login()
@@ -173,16 +199,47 @@ class LoginPage:
                 return  # 成功，退出函数
 
             except TimeoutException:
-                logging.warning(f"登录尝试 {attempt + 1} 失败：页面在超时时间内未跳转。")
+                current_url = self._sanitize_url(self.driver.current_url)
+                logging.warning(f"登录尝试 {attempt + 1} 超时")
+                logging.warning(f"当前URL: {current_url}")
+                
+                # 最后一次检查是否实际上已经成功了
+                if self._check_login_success(initial_url):
+                    logging.info("虽然超时，但检测到登录实际上已成功")
+                    try:
+                        self.navigate_after_login()
+                        logging.info("登录流程完全成功。")
+                        return
+                    except Exception as nav_error:
+                        logging.warning(f"导航操作失败: {nav_error}")
+                        # 即使导航失败，登录可能已经成功，所以继续
+                        return
+                
                 if attempt < self.login_retries:
-                    time.sleep(2)
+                    wait_time = 2 + attempt  # 递增等待时间
+                    logging.info(f"等待 {wait_time} 秒后重试...")
+                    time.sleep(wait_time)
                 else:
                     logging.error("所有登录尝试均因超时失败。")
                     raise Exception("登录失败：页面在多次尝试后仍未跳转。")
+                    
             except Exception as e:
                 logging.warning(f"登录尝试 {attempt + 1} 失败，发生错误: {e}")
+                
+                # 即使出现异常，也检查一下是否实际登录成功了
+                try:
+                    if self._check_login_success(initial_url):
+                        logging.info("虽然出现异常，但检测到登录实际上已成功")
+                        self.navigate_after_login()
+                        logging.info("登录流程完全成功。")
+                        return
+                except:
+                    pass  # 检查失败，继续原有的错误处理流程
+                
                 if attempt < self.login_retries:
-                    time.sleep(2)
+                    wait_time = 2 + attempt
+                    logging.info(f"等待 {wait_time} 秒后重试...")
+                    time.sleep(wait_time)
                 else:
                     logging.error("所有登录尝试均因发生未知错误而失败。")
-                    raise # 抛出最后一次的异常
+                    raise  # 抛出最后一次的异常

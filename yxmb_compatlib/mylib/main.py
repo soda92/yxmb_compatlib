@@ -11,6 +11,30 @@ import logging
 
 # --- 辅助函数 ---
 
+import logging
+
+
+def disable_login_bg(driver, urls:list[str]):
+    # 启用网络拦截
+    driver.execute_cdp_cmd('Network.enable', {})
+
+    # 定义要阻止的图片URL模式
+    # 示例：阻止来自 example.com 域名下的所有图片
+    # 或者阻止包含特定关键词的图片
+    block_patterns = urls
+    # "*.example.com/*.png",  # 阻止example.com下所有png图片
+    # "*.othersite.com/ads/*.jpg", # 阻止othersite.com下ads目录的jpg图片
+    # "data:image/*" # 阻止base64编码的图片 (data URI)
+
+    # 添加请求拦截规则
+    # resourceType: 'Image' 确保我们只拦截图片请求
+    # urlFilter: 使用通配符匹配URL
+    # behavior: 'block' 阻止请求
+    driver.execute_cdp_cmd('Network.setBlockedURLs', {'urls': block_patterns})
+
+    logging.info('已设置图片拦截规则。')
+
+
 
 def _find_bin_version() -> str:
     """在 BIN 目录中查找浏览器版本。"""
@@ -66,7 +90,9 @@ Browser_drivers=no
         config.read(config_path, encoding='utf-8')
 
         google = config.get('config', 'Google')
-        browser_drivers = config.get('config', 'Browser_drivers')
+        if google.lower() in ["google", "hh"]:
+            google = google.lower()
+        browser_drivers = config.get('config', 'Browser_drivers').lower()
 
     driver = None
     options = None
@@ -93,7 +119,10 @@ Browser_drivers=no
         driver_path = 'chromedriver.exe'
         service = Service(driver_path)
         options = webdriver.ChromeOptions()
-        prefs = {}
+        prefs = {
+            'credentials_enable_service': False,
+            'profile.password_manager_enabled': False,
+        }
         if disable_image:
             options.add_argument('--blink-settings=imagesEnabled=false')
             prefs['profile.managed_default_content_settings.images'] = 2
@@ -102,7 +131,10 @@ Browser_drivers=no
 
     elif google == 'google' and browser_drivers == 'no':
         options = webdriver.ChromeOptions()
-        prefs = {}
+        prefs = {
+            'credentials_enable_service': False,
+            'profile.password_manager_enabled': False,
+        }
         if disable_image:
             options.add_argument('--blink-settings=imagesEnabled=false')
             prefs['profile.managed_default_content_settings.images'] = 2
@@ -139,6 +171,10 @@ Browser_drivers=no
     driver.set_page_load_timeout(600)
     driver.implicitly_wait(10)
 
+    from yxmb_compatlib.config import load_config
+    config = load_config()
+    urls = config.get('login_bg', {}).get('bg_urls', [])
+    disable_login_bg(driver, urls)
     return driver
 
 
