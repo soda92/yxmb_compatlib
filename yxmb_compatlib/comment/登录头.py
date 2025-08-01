@@ -61,7 +61,7 @@ def login(driver: WebDriver):
     # 3. 实例化LoginPage并执行带重试的登录
     try:
         login_page = LoginPage(driver, config)
-        login_page.login_with_retries(url, account, password, department_name)
+        login_page.login(url, account, password, department_name)
     except Exception as e:
         logging.error(f"登录流程最终失败: {e}")
         # 可以在这里决定是否关闭浏览器或执行其他清理操作

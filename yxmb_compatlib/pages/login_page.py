@@ -95,27 +95,103 @@ class LoginPage:
 
         self._send_keys(self.locators['captcha_input'], res)
 
-    def execute_login(self, username, password, department_name=None):
-        """执行完整的登录流程。"""
-        self._send_keys(self.locators['username'], username)
-        self._send_keys(self.locators['password'], password)
+    def _check_captcha_error(self) -> bool:
+        """检查是否存在验证码错误信息。"""
+        try:
+            # 使用一个很短的超时来快速检查元素是否存在
+            WebDriverWait(self.driver, 1).until(
+                EC.visibility_of_element_located(("xpath", "//font[contains(text(), '验证码错误')]"))
+            )
+            logging.warning("检测到验证码错误，将立即重试。")
+            return True
+        except TimeoutException:
+            return False
 
-        if self.has_captcha():
-            # 如果需要，可以加入更复杂的逻辑，例如多次尝试
-            self.solve_captcha()
-
-        self._click_element(self.locators['login_button'])
-
-        # 登录后选择科室（如果需要且未被配置忽略）
-        if department_name and self.locators['department_button'].by and not self.ignore_department_selection:
+    def login(self, url: str, username: str, password: str, department_name: str = None):
+        """
+        执行完整的登录流程，包含重试、验证码错误处理和成功验证。
+        """
+        initial_url = ""
+        for attempt in range(self.login_retries + 1):
             try:
-                # 更新定位符以包含科室名称
-                dep_locator = self.locators['department_button'].format(name=department_name)
-                self._click_element(dep_locator)
-            except TimeoutException:
-                logging.warning(f"未找到科室按钮: {department_name}")
+                logging.info(f"开始第 {attempt + 1}/{self.login_retries + 1} 次登录尝试...")
+                if attempt == 0:
+                    self.driver.maximize_window()
+                
+                self.driver.get(url)
+                
+                initial_url = self._sanitize_url(self.driver.current_url)
+                logging.info(f"初始URL: {initial_url}")
 
-        self._handle_alert()
+                # 填写表单
+                self._send_keys(self.locators['username'], username)
+                self._send_keys(self.locators['password'], password)
+
+                if self.has_captcha():
+                    self.solve_captcha()
+
+                self._click_element(self.locators['login_button'])
+
+                # 检查验证码错误，如果发现，立即进入下一次循环
+                if self._check_captcha_error():
+                    time.sleep(1) # 短暂等待后重试
+                    continue
+
+                # 验证登录是否成功（通过URL是否改变）
+                extended_timeout = self.login_timeout + (attempt * 5)
+                logging.info(f"等待页面跳转，超时时间: {extended_timeout}秒")
+                
+                WebDriverWait(self.driver, extended_timeout).until(
+                    lambda driver: self._sanitize_url(driver.current_url) != initial_url
+                )
+                
+                final_url = self._sanitize_url(self.driver.current_url)
+                logging.info(f"URL已改变，登录验证成功: {initial_url} -> {final_url}")
+
+                # 登录后选择科室（如果需要）
+                if department_name and self.locators['department_button'].by and not self.ignore_department_selection:
+                    try:
+                        dep_locator = self.locators['department_button'].format(name=department_name)
+                        self._click_element(dep_locator)
+                    except TimeoutException:
+                        logging.warning(f"未找到科室按钮: {department_name}")
+                
+                self._handle_alert()
+
+                # 执行登录后的导航操作
+                self.navigate_after_login()
+
+                logging.info("登录流程完全成功。")
+                return
+
+            except TimeoutException:
+                current_url = self._sanitize_url(self.driver.current_url)
+                logging.warning(f"登录尝试 {attempt + 1} 超时。当前URL: {current_url}")
+                
+                if self._check_login_success(initial_url):
+                    logging.info("虽然超时，但检测到登录实际上已成功。")
+                    self.navigate_after_login()
+                    return
+                
+                if attempt < self.login_retries:
+                    time.sleep(2 + attempt)
+                else:
+                    logging.error("所有登录尝试均因超时失败。")
+                    raise Exception("登录失败：页面在多次尝试后仍未跳转。")
+                    
+            except Exception as e:
+                logging.error(f"登录尝试 {attempt + 1} 失败，发生错误: {e}", exc_info=True)
+                
+                if self._check_login_success(initial_url):
+                    logging.info("虽然出现异常，但检测到登录实际上已成功。")
+                    self.navigate_after_login()
+                    return
+                
+                if attempt < self.login_retries:
+                    time.sleep(2 + attempt)
+                else:
+                    logging.error("所有登录尝试均因发生未知错误而失败。")
+                    raise
 
     def navigate_after_login(self):
         """登录成功后，根据配置执行一系列操作。"""
@@ -153,93 +229,3 @@ class LoginPage:
             except Exception as e:
                 print(f"错误: 执行操作 '{description}' 时发生意外错误: {e}")
                 raise e
-
-    def login_with_retries(self, url: str, username: str, password: str, department_name: str = None):
-        """
-        执行完整的登录流程，包含重试和成功验证。
-        """
-        for attempt in range(self.login_retries + 1):
-            try:
-                logging.info(f"开始第 {attempt + 1}/{self.login_retries + 1} 次登录尝试...")
-                self.driver.maximize_window()
-                self.driver.get(url)
-                
-                # 获取并清理初始URL
-                initial_url = self._sanitize_url(self.driver.current_url)
-                logging.info(f"初始URL: {initial_url}")
-
-                # 在重试之前，先检查是否已经登录成功
-                if attempt > 0:
-                    logging.info("重试前检查登录状态...")
-                    if self._check_login_success(initial_url):
-                        logging.info("检测到已经登录成功，跳过登录步骤")
-                        self.navigate_after_login()
-                        logging.info("登录流程完全成功。")
-                        return
-
-                # 执行登录操作（填写表单，点击按钮）
-                self.execute_login(username, password, department_name)
-
-                # 验证登录是否成功（通过清理后的URL是否改变）
-                # 增加超时时间以处理慢速页面跳转
-                extended_timeout = self.login_timeout + (attempt * 5)  # 每次重试增加5秒
-                logging.info(f"等待页面跳转，超时时间: {extended_timeout}秒")
-                
-                WebDriverWait(self.driver, extended_timeout).until(
-                    lambda driver: self._sanitize_url(driver.current_url) != initial_url
-                )
-                
-                final_url = self._sanitize_url(self.driver.current_url)
-                logging.info(f"URL已改变，登录验证成功: {initial_url} -> {final_url}")
-
-                # 登录成功后，执行后续导航操作
-                self.navigate_after_login()
-
-                logging.info("登录流程完全成功。")
-                return  # 成功，退出函数
-
-            except TimeoutException:
-                current_url = self._sanitize_url(self.driver.current_url)
-                logging.warning(f"登录尝试 {attempt + 1} 超时")
-                logging.warning(f"当前URL: {current_url}")
-                
-                # 最后一次检查是否实际上已经成功了
-                if self._check_login_success(initial_url):
-                    logging.info("虽然超时，但检测到登录实际上已成功")
-                    try:
-                        self.navigate_after_login()
-                        logging.info("登录流程完全成功。")
-                        return
-                    except Exception as nav_error:
-                        logging.warning(f"导航操作失败: {nav_error}")
-                        # 即使导航失败，登录可能已经成功，所以继续
-                        return
-                
-                if attempt < self.login_retries:
-                    wait_time = 2 + attempt  # 递增等待时间
-                    logging.info(f"等待 {wait_time} 秒后重试...")
-                    time.sleep(wait_time)
-                else:
-                    logging.error("所有登录尝试均因超时失败。")
-                    raise Exception("登录失败：页面在多次尝试后仍未跳转。")
-                    
-            except Exception as e:
-                logging.warning(f"登录尝试 {attempt + 1} 失败，发生错误: {e}")
-                
-                # 即使出现异常，也检查一下是否实际登录成功了
-                try:
-                    if self._check_login_success(initial_url):
-                        logging.info("虽然出现异常，但检测到登录实际上已成功")
-                        self.navigate_after_login()
-                        logging.info("登录流程完全成功。")
-                        return
-                except:
-                    pass  # 检查失败，继续原有的错误处理流程
-                
-                if attempt < self.login_retries:
-                    wait_time = 2 + attempt
-                    logging.info(f"等待 {wait_time} 秒后重试...")
-                    time.sleep(wait_time)
-                else:
-                    logging.error("所有登录尝试均因发生未知错误而失败。")
-                    raise  # 抛出最后一次的异常
