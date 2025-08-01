@@ -109,6 +109,7 @@ Browser_drivers=no
         prefs = {
             'credentials_enable_service': False,
             'profile.password_manager_enabled': False,
+            "profile.default_content_setting_values.clipboard": 1,
         }
         if disable_image:
             options.add_argument('--blink-settings=imagesEnabled=false')
@@ -122,6 +123,7 @@ Browser_drivers=no
         prefs = {
             'credentials_enable_service': False,
             'profile.password_manager_enabled': False,
+            "profile.default_content_setting_values.clipboard": 1,
         }
         if disable_image:
             options.add_argument('--blink-settings=imagesEnabled=false')
@@ -134,6 +136,7 @@ Browser_drivers=no
         prefs = {
             'credentials_enable_service': False,
             'profile.password_manager_enabled': False,
+            "profile.default_content_setting_values.clipboard": 1,
         }
         if disable_image:
             options.add_argument('--blink-settings=imagesEnabled=false')
