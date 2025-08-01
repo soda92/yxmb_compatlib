@@ -1,3 +1,26 @@
 pinyin = "guangning"
-login.captcha_enabled = false
 settings.ignore_department = false
+
+[login]
+    captcha_enabled = false
+    username = ["id", "j_username"]
+    password = ["id", "j_password"]
+
+  # 登录后执行的操作序列
+  # type 可为: "switch_window", "maximize_window", "click", "handle_alert"
+  post_login_actions = [
+    { type = "switch_window" },
+    { type = "maximize_window" },
+    { type = "handle_alert" },
+    { type = "click", locator = ["xpath", "//*[@id='dd65-ddheader']"], description = "点击主菜单/导航头" },
+    { type = "handle_alert" },
+    { type = "click", locator = ["xpath", "//span[text()='健康档案']"], description = "点击健康档案菜单" },
+    { type = "handle_alert" },
+    { type = "click", locator = ["xpath", "//*[@id='button-1005-btnIconEl']"], description = "关闭可能出现的弹窗", optional = true }
+  ]
+
+[login_bg]
+bg_urls = [
+    'http://10.216.11.12:8089/cis/images/img/bg@3x.png',
+    'http://10.216.11.12:8089/cis/images/img/bg-login@2x.png',
+]

@@ -2,154 +2,161 @@ pinyin = ""
 
 # 通用设置
 [settings]
-  default_timeout = 10
-  login_retries = 4 # 登录失败时的重试次数
-  login_timeout = 5
-  expiration_date = "2099-02-22" # 软件过期日期
-  ignore_department = true # 是否忽略科室选择
+default_timeout = 10
+login_retries = 4              # 登录失败时的重试次数
+login_timeout = 30
+expiration_date = "2099-02-22" # 软件过期日期
+ignore_department = true       # 是否忽略科室选择
 
 # 用户凭据（通常由 admin.txt 提供）
 [credentials]
-  url = ""
-  username = ""
-  password = ""
-  department_name = ""
+url = ""
+username = ""
+password = ""
+department_name = ""
 
 # 登录页面
 [login]
-  # 场景一：常见登录页
-  username = ["id", "j_username"]
-  password = ["id", "j_password"]
-  login_button = ["class_name", "submit-btn"]
+# 场景一：常见登录页
+username = ["id", "phisname"]
+password = ["id", "password"]
+login_button = ["class_name", "submit-btn"]
 
-  # 验证码相关（如果存在）
-  captcha_enabled = true # 通过此开关控制是否处理验证码，医院配置可覆盖为 false
-  captcha_image = ["id", "img"]
-  captcha_input = ["xpath", "//*[@id='verifyCode']"]
+# 验证码相关（如果存在）
+captcha_enabled = true                             # 通过此开关控制是否处理验证码，医院配置可覆盖为 false
+captcha_image = ["id", "img"]
+captcha_input = ["xpath", "//*[@id='verifyCode']"]
 
-  # 登录后选择科室（动态XPath，使用 .format(科室名) 填充）
-  department_button = ["xpath", "//div[contains(text(), '{name}')]"]
+# 登录后选择科室（动态XPath，使用 .format(科室名) 填充）
+department_button = ["xpath", "//div[contains(text(), '{name}')]"]
 
-  # 登录后执行的操作序列
-  # type 可为: "switch_window", "maximize_window", "click", "handle_alert"
-  post_login_actions = [
-    { type = "switch_window" },
-    { type = "maximize_window" },
-    { type = "handle_alert" },
-    { type = "click", locator = ["xpath", "//*[@id='dd65-ddheader']"], description = "点击主菜单/导航头" },
-    { type = "handle_alert" },
-    { type = "click", locator = ["xpath", "//span[text()='健康档案']"], description = "点击健康档案菜单" },
-    { type = "handle_alert" },
-    { type = "click", locator = ["xpath", "//*[@id='button-1005-btnIconEl']"], description = "关闭可能出现的弹窗", optional = true }
-  ]
-
+post_login_actions = [
+  { type = "click", locator = [
+    "xpath",
+    "//span[text()='健康档案']",
+  ], description = "点击健康档案菜单", optional = true},
+  { type = "click", locator = [
+    "xpath",
+    "//*[@id='button-1005-btnIconEl']",
+  ], description = "关闭可能出现的弹窗", optional = true },
+  { type = "click", locator = [
+    "xpath",
+    "//li[text()='档案管理']",
+  ], description = "点击档案管理" },
+]
 # 引入用药
 [medicine]
-  name_similarity_threshold = 0.8 # 药品名称相似度阈值
+name_similarity_threshold = 0.8 # 药品名称相似度阈值
 
 # 数据验证配置
 [validation]
-  # 定义用于查找日期的列名，按优先级顺序排列
-  date_columns = ["随访日期", "成功", "日期", "followup_date", "date"]
+# 定义用于查找日期的列名，按优先级顺序排列
+date_columns = ["随访日期", "成功", "日期", "followup_date", "date"]
 
-  # 是否启用身份证严格校验
-  strict_id_check = true
+# 是否启用身份证严格校验
+strict_id_check = true
 
 # 菜单配置
 [menus]
-  # 定义菜单ID映射
-  "体检服务" = "menu_5_1"
-  "慢病随访" = "menu_3_3"
-  "普通随访" = "menu_3_1"
+# 定义菜单ID映射
+"体检服务" = "menu_5_1"
+"慢病随访" = "menu_3_3"
+"普通随访" = "menu_3_1"
+
+[login_bg]
+bg_urls = [
+  "http://192.168.10.50:8081/phis/static/images/logins/PHIS-bg.png",
+  "http://192.168.10.50:8081/phis/static/images/logins/bg-denglu.png",
+]
 
 # 列名别名配置
 # key 是程序内部使用的标准名，value 是 Excel 中可能出现的列名列表
 [column_aliases]
-  # 基本信息
-  sfzh = ["身份证号", "身份证", "id_number", "身份证号码"]
-  name = ["姓名", "患者姓名", "name"]
-  followup_date = ["随访日期", "成功", "日期", "date"]
-  
-  # 随访基本信息
-  follow_way = ["随访方式", "followup_way", "随访类型"]
-  is_national_standard = ["是否加入国家标准版", "国家标准版", "国标"]
-  
-  # 用药相关
-  compliance = ["服药依从性", "依从性", "medication_compliance"]
-  untoward_effect = ["药物不良反应", "不良反应", "adverse_reaction"]
-  untoward_effect_desc = ["药物不良反应描述", "药物不良反应编辑框", "不良反应描述", "adverse_desc"]
-  medication_info = ["用药情况", "药物", "medication", "用药"]
-  
-  # 随访分类
-  followup_category_bp = ["血压随访分类", "此次随访分类", "bp_category", "高血压分类"]
-  followup_category_bg = ["血糖随访分类", "此次随访分类", "bg_category", "糖尿病分类", "血糖分类"]
-  hypoglycemia = ["低血糖反应", "低血糖", "hypoglycemia"]
-  
-  # 症状
-  symptom = ["症状", "symptoms", "主要症状"]
-  symptom_desc = ["症状编辑框", "症状描述", "其他症状", "symptom_desc"]
-  
-  # 体征测量
-  height = ["身高", "height", "身高cm"]
-  weight_cur = ["体重", "体重当前", "当前体重", "weight", "weight_current", "体重kg"]
-  weight_tar = ["目标体重", "体重目标", "target_weight"]
-  sbp = ["收缩压", "高压", "SBP", "systolic", "收缩压mmHg"]
-  dbp = ["舒张压", "低压", "DBP", "diastolic", "舒张压mmHg"]
-  heart_rate_cur = ["心率", "心率当前", "当前心率", "heart_rate", "hr", "心率次/分"]
-  heart_rate_tar = ["目标心率", "心率目标", "target_heart_rate"]
-  
-  # 足背动脉搏动
-  dorsalis_pedis_normal = ["足背动脉搏动触及正常", "足背动脉正常", "dorsalis_normal"]
-  dorsalis_pedis_weaken = ["足背动脉搏动减弱", "足背动脉减弱", "dorsalis_weaken"]
-  dorsalis_pedis_disappear = ["足背动脉搏动消失", "足背动脉消失", "dorsalis_disappear"]
-  other_sign = ["其他体征", "other_signs", "其他症状体征"]
-  
-  # 生活方式
-  sm_amount_cur = ["日吸烟量", "日吸烟量当前", "smoking_current", "吸烟量支/日"]
-  sm_amount_tar = ["目标日吸烟量", "日吸烟量目标", "smoking_target"]
-  dk_amount_cur = ["日饮酒量", "日饮酒量当前", "drinking_current", "饮酒量两/日"]
-  dk_amount_tar = ["目标日饮酒量", "日饮酒量目标", "drinking_target"]
-  ex_cycle_cur = ["运动次数", "运动频率当前", "exercise_frequency", "运动次数次/周"]
-  ex_cycle_tar = ["目标运动次数", "运动频率目标", "exercise_target_frequency"]
-  ex_time_cur = ["运动时间", "运动时间当前", "exercise_time", "运动时间分钟/次"]
-  ex_time_tar = ["目标运动时间", "运动时间目标", "exercise_target_time"]
-  st_amount_cur = ["摄盐情况当前", "摄盐量", "salt_intake"]
-  st_amount_tar = ["摄盐情况目标", "目标摄盐量", "salt_target"]
-  fh_amount_cur = ["主食量", "主食情况当前", "staple_food", "主食量g/日"]
-  fh_amount_tar = ["目标主食量", "主食量目标", "staple_target"]
-  
-  # 心理行为
-  psychological = ["心理调整", "psychological", "心理状态"]
-  follow_behavior = ["遵医行为", "follow_behavior", "遵医依从性"]
-  
-  # 实验室检查
-  fbg = ["空腹血糖", "FBG", "fasting_glucose", "空腹血糖mmol/L"]
-  pbg = ["餐后血糖", "PBG", "postprandial_glucose", "餐后2h血糖", "餐后血糖mmol/L"]
-  hba1c = ["糖化血红蛋白", "HbA1c", "glycated_hemoglobin", "糖化血红蛋白%"]
-  tc = ["TC", "总胆固醇", "total_cholesterol", "总胆固醇mmol/L"]
-  tg = ["TG", "甘油三酯", "triglyceride", "甘油三酯mmol/L"]
-  ldl_c = ["LDL-c", "低密度脂蛋白胆固醇", "LDL", "低密度脂蛋白", "低密度脂蛋白胆固醇mmol/L"]
-  hdl_c = ["HDL-c", "高密度脂蛋白胆固醇", "HDL", "高密度脂蛋白", "高密度脂蛋白胆固醇mmol/L"]
-  bun = ["BUN", "尿素氮", "blood_urea_nitrogen", "尿素氮mmol/L"]
-  cr = ["Cr", "肌酐", "creatinine", "血肌酐", "肌酐μmol/L"]
-  ccr = ["肌酐清除率", "CCr", "creatinine_clearance", "肌酐清除率ml/min"]
-  uran = ["尿检", "尿常规", "urine_test", "尿液检查"]
-  malb = ["尿微量白蛋白", "微量白蛋白", "microalbumin", "尿微量白蛋白mg/L"]
-  ecg = ["心电图", "ECG", "electrocardiogram"]
-  fundus_oculi = ["眼底", "眼底检查", "fundus", "眼底镜检查"]
-  other_test = ["其他辅助检查", "其他检查", "other_examination"]
-  
-  # 疾病评估
-  is_diabetes = ["是否糖尿病", "糖尿病", "diabetes"]
-  is_elderly = ["是否老年人", "老年人", "elderly", "是否≥65岁"]
-  is_cough = ["是否咳嗽、咳痰≥2周", "咳嗽咳痰", "cough", "是否咳嗽咳痰≥2周"]
-  is_hemoptysis = ["是否痰中带血或咯血", "痰中带血", "hemoptysis", "是否痰中带血或咯血"]
-  
-  # 转诊信息
-  referral_reason = ["转诊原因", "转诊", "referral_reason"]
-  referral_org_dept = ["机构及科别", "转诊机构", "referral_org", "转至医疗机构及科别"]
-  
-  # 医生意见
-  assess = ["评估", "assessment", "医生评估"]
-  lifestyle = ["生活方式", "lifestyle", "生活方式指导"]
-  suggest = ["医生建议", "建议", "suggestion", "医生意见"]
+# 基本信息
+sfzh = ["身份证号", "身份证", "id_number", "身份证号码"]
+name = ["姓名", "患者姓名", "name"]
+followup_date = ["随访日期", "成功", "日期", "date"]
+
+# 随访基本信息
+follow_way = ["随访方式", "followup_way", "随访类型"]
+is_national_standard = ["是否加入国家标准版", "国家标准版", "国标"]
+
+# 用药相关
+compliance = ["服药依从性", "依从性", "medication_compliance"]
+untoward_effect = ["药物不良反应", "不良反应", "adverse_reaction"]
+untoward_effect_desc = ["药物不良反应描述", "药物不良反应编辑框", "不良反应描述", "adverse_desc"]
+medication_info = ["用药情况", "药物", "medication", "用药"]
+
+# 随访分类
+followup_category_bp = ["血压随访分类", "此次随访分类", "bp_category", "高血压分类"]
+followup_category_bg = ["血糖随访分类", "此次随访分类", "bg_category", "糖尿病分类", "血糖分类"]
+hypoglycemia = ["低血糖反应", "低血糖", "hypoglycemia"]
+
+# 症状
+symptom = ["症状", "symptoms", "主要症状"]
+symptom_desc = ["症状编辑框", "症状描述", "其他症状", "symptom_desc"]
+
+# 体征测量
+height = ["身高", "height", "身高cm"]
+weight_cur = ["体重", "体重当前", "当前体重", "weight", "weight_current", "体重kg"]
+weight_tar = ["目标体重", "体重目标", "target_weight"]
+sbp = ["收缩压", "高压", "SBP", "systolic", "收缩压mmHg"]
+dbp = ["舒张压", "低压", "DBP", "diastolic", "舒张压mmHg"]
+heart_rate_cur = ["心率", "心率当前", "当前心率", "heart_rate", "hr", "心率次/分"]
+heart_rate_tar = ["目标心率", "心率目标", "target_heart_rate"]
+
+# 足背动脉搏动
+dorsalis_pedis_normal = ["足背动脉搏动触及正常", "足背动脉正常", "dorsalis_normal"]
+dorsalis_pedis_weaken = ["足背动脉搏动减弱", "足背动脉减弱", "dorsalis_weaken"]
+dorsalis_pedis_disappear = ["足背动脉搏动消失", "足背动脉消失", "dorsalis_disappear"]
+other_sign = ["其他体征", "other_signs", "其他症状体征"]
+
+# 生活方式
+sm_amount_cur = ["日吸烟量", "日吸烟量当前", "smoking_current", "吸烟量支/日"]
+sm_amount_tar = ["目标日吸烟量", "日吸烟量目标", "smoking_target"]
+dk_amount_cur = ["日饮酒量", "日饮酒量当前", "drinking_current", "饮酒量两/日"]
+dk_amount_tar = ["目标日饮酒量", "日饮酒量目标", "drinking_target"]
+ex_cycle_cur = ["运动次数", "运动频率当前", "exercise_frequency", "运动次数次/周"]
+ex_cycle_tar = ["目标运动次数", "运动频率目标", "exercise_target_frequency"]
+ex_time_cur = ["运动时间", "运动时间当前", "exercise_time", "运动时间分钟/次"]
+ex_time_tar = ["目标运动时间", "运动时间目标", "exercise_target_time"]
+st_amount_cur = ["摄盐情况当前", "摄盐量", "salt_intake"]
+st_amount_tar = ["摄盐情况目标", "目标摄盐量", "salt_target"]
+fh_amount_cur = ["主食量", "主食情况当前", "staple_food", "主食量g/日"]
+fh_amount_tar = ["目标主食量", "主食量目标", "staple_target"]
+
+# 心理行为
+psychological = ["心理调整", "psychological", "心理状态"]
+follow_behavior = ["遵医行为", "follow_behavior", "遵医依从性"]
+
+# 实验室检查
+fbg = ["空腹血糖", "FBG", "fasting_glucose", "空腹血糖mmol/L"]
+pbg = ["餐后血糖", "PBG", "postprandial_glucose", "餐后2h血糖", "餐后血糖mmol/L"]
+hba1c = ["糖化血红蛋白", "HbA1c", "glycated_hemoglobin", "糖化血红蛋白%"]
+tc = ["TC", "总胆固醇", "total_cholesterol", "总胆固醇mmol/L"]
+tg = ["TG", "甘油三酯", "triglyceride", "甘油三酯mmol/L"]
+ldl_c = ["LDL-c", "低密度脂蛋白胆固醇", "LDL", "低密度脂蛋白", "低密度脂蛋白胆固醇mmol/L"]
+hdl_c = ["HDL-c", "高密度脂蛋白胆固醇", "HDL", "高密度脂蛋白", "高密度脂蛋白胆固醇mmol/L"]
+bun = ["BUN", "尿素氮", "blood_urea_nitrogen", "尿素氮mmol/L"]
+cr = ["Cr", "肌酐", "creatinine", "血肌酐", "肌酐μmol/L"]
+ccr = ["肌酐清除率", "CCr", "creatinine_clearance", "肌酐清除率ml/min"]
+uran = ["尿检", "尿常规", "urine_test", "尿液检查"]
+malb = ["尿微量白蛋白", "微量白蛋白", "microalbumin", "尿微量白蛋白mg/L"]
+ecg = ["心电图", "ECG", "electrocardiogram"]
+fundus_oculi = ["眼底", "眼底检查", "fundus", "眼底镜检查"]
+other_test = ["其他辅助检查", "其他检查", "other_examination"]
+
+# 疾病评估
+is_diabetes = ["是否糖尿病", "糖尿病", "diabetes"]
+is_elderly = ["是否老年人", "老年人", "elderly", "是否≥65岁"]
+is_cough = ["是否咳嗽、咳痰≥2周", "咳嗽咳痰", "cough", "是否咳嗽咳痰≥2周"]
+is_hemoptysis = ["是否痰中带血或咯血", "痰中带血", "hemoptysis", "是否痰中带血或咯血"]
+
+# 转诊信息
+referral_reason = ["转诊原因", "转诊", "referral_reason"]
+referral_org_dept = ["机构及科别", "转诊机构", "referral_org", "转至医疗机构及科别"]
+
+# 医生意见
+assess = ["评估", "assessment", "医生评估"]
+lifestyle = ["生活方式", "lifestyle", "生活方式指导"]
+suggest = ["医生建议", "建议", "suggestion", "医生意见"]

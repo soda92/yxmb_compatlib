@@ -1,8 +1,1 @@
 pinyin = "xi-luo-yuan"
-login.username = ["id", "phisname"]
-login.password = ["id", "password"]
-login.post_login_actions = [
-    { type = "click", locator = ["xpath", "//span[text()='健康档案']"], description = "点击健康档案菜单" },
-    { type = "click", locator = ["xpath", "//*[@id='button-1005-btnIconEl']"], description = "关闭可能出现的弹窗", optional = true },
-    { type = "click", locator = ["xpath", "//li[text()='档案管理']"], description = "点击档案管理" },
-  ]
