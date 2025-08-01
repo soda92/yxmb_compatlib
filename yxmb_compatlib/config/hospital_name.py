@@ -89,6 +89,4 @@ def get_hospital_name() -> str:
                 return hospital_name
 
     # 如果所有方法都失败了
-    raise ValueError(
-        "无法从可执行文件、路径或命令行参数中检测到医院名称。请确保配置文件存在且命名正确。"
-    )
+    return "default"
