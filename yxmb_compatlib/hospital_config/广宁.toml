@@ -9,13 +9,11 @@ settings.ignore_department = false
   # 登录后执行的操作序列
   # type 可为: "switch_window", "maximize_window", "click", "handle_alert"
   post_login_actions = [
-    { type = "switch_window" },
-    { type = "maximize_window" },
     { type = "handle_alert" },
     { type = "click", locator = ["xpath", "//*[@id='dd65-ddheader']"], description = "点击主菜单/导航头" },
     { type = "handle_alert" },
-    { type = "click", locator = ["xpath", "//span[text()='健康档案']"], description = "点击健康档案菜单" },
-    { type = "handle_alert" },
+    { type = "switch_window" },
+    { type = "maximize_window" },
     { type = "click", locator = ["xpath", "//*[@id='button-1005-btnIconEl']"], description = "关闭可能出现的弹窗", optional = true }
   ]
 
