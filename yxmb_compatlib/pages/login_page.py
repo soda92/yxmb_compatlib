@@ -155,8 +155,6 @@ class LoginPage:
                         self._click_element(dep_locator)
                     except TimeoutException:
                         logging.warning(f"未找到科室按钮: {department_name}")
-                
-                self._handle_alert()
 
                 # 执行登录后的导航操作
                 self.navigate_after_login()

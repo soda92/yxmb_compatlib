@@ -116,6 +116,7 @@ def update_exercise_time(sfzh, sport_time, bmi):
 
 
 def update_staple_food(bmi, staple_food):
+    staple_food = int(staple_food)
     bmi = float(bmi)
 
     if bmi < 18.5:
