@@ -86,9 +86,15 @@ def get_new_sf_data(mb_data, mz_data, tj_data, n_sf_time, sf_data, sfzh):
     # 根据规则为每个字段选择数据
     selected_data = {'随访日期': n_sf_time}
 
-    # 业务： 随访的身高体重从档案里调数据 别从门诊记录里
+    # 业务： 随访的身高体重从档案还是从门诊记录里调数据
     # 身高
-    height, from_mz = mb_data.get('身高'), False
+    from yxmb_compatlib.config import load_config
+    config = load_config()
+    if config['new_follow_up']['height_weight_from_clinic_record'] is True:
+         height, from_mz = select_data_for_field('身高', n_sf_time, mz_data, tj_data, mb_data)
+    else:
+        height, from_mz = mb_data.get('身高'), False
+
     existing_height_values = [
         (date, float(v['身高']))
         for date, v in sf_data.items()
@@ -115,9 +121,13 @@ def get_new_sf_data(mb_data, mz_data, tj_data, n_sf_time, sf_data, sfzh):
     check_range('身高', height, source)
     selected_data['身高'] = height
 
-    # 业务：随访的身高体重从档案里调数据 别从门诊记录里
+    # 业务：随访的身高体重从档案里还是从门诊记录里调数据
     # 体重
-    weight, from_mz = mb_data.get('体重'), False
+    if config['new_follow_up']['height_weight_from_clinic_record'] is True:
+        weight, from_mz = select_data_for_field('体重', n_sf_time, mz_data, tj_data, mb_data)
+    else:
+        weight, from_mz = mb_data.get('体重'), False
+
     existing_weight_values = [
         (date, float(v['体重']))
         for date, v in sf_data.items()
