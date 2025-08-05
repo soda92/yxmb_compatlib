@@ -23,44 +23,27 @@ def deep_merge(source, destination):
     return destination
 
 
-def _load_and_merge_credentials(config: dict, config_dir: str):
+def _load_and_merge_envtxt_and_admintxt_to_config(config: dict, config_dir: str):
     """
     查找并加载 admin.txt 中的凭据，然后合并到配置中。
     它会在当前工作目录的 '文档' 子目录中寻找 admin.txt。
     """
-    admin_txt_path = Path.cwd() / "文档" / "admin.txt"
+    from phis_config import ProgramConfigV2
+    url = ProgramConfigV2.get_url()
+    username = ProgramConfigV2.get_username()
+    password = ProgramConfigV2.get_password()
+    department_name = ProgramConfigV2.get_department_name()
 
-    if not admin_txt_path.exists():
-        print("警告: 在 '文档' 目录下未找到 'admin.txt'。将跳过凭据加载。")
-        return config
+    # 确保 credentials 表存在
+    config.setdefault("credentials", {})
 
-    try:
-        with open(admin_txt_path, "r", encoding="utf-8") as f:
-            # 读取所有行并去除首尾空白，过滤掉空行
-            lines = [line.strip() for line in f if line.strip()]
+    config["credentials"]["url"] = url
+    config["credentials"]["username"] = username
+    config["credentials"]["password"] = password
+    config["credentials"]["department_name"] = department_name
 
-        if len(lines) < 3:
-            print(f"警告: '{admin_txt_path}' 文件格式不正确，应至少包含3行（URL, 用户名, 密码）。")
-            return config
-
-        # 确保 credentials 表存在
-        config.setdefault("credentials", {})
-
-        # 分配凭据
-        config["credentials"]["url"] = lines[0]
-        config["credentials"]["username"] = lines[1]
-        config["credentials"]["password"] = lines[2]
-
-        # 处理可选的第四行（部门名称）
-        if len(lines) >= 4:
-            config["credentials"]["department_name"] = lines[3]
-            print(f"成功从 '{admin_txt_path}' 加载凭据。")
-        else:
-            config["credentials"]["department_name"] = None
-            print(f"成功从 '{admin_txt_path}' 加载凭据（无部门名称）。")
-
-    except Exception as e:
-        print(f"错误: 读取 '{admin_txt_path}' 时发生错误: {e}")
+    config.setdefault('new_follow_up', {})
+    config['new_follow_up']['use_clinic_record_other_than_contracted_doctor'] = ProgramConfigV2.use_other_doctor_records()
 
     return config
 
@@ -141,6 +124,6 @@ def load_config():
             config = deep_merge(external_config, config)
 
     # 4. 加载并合并 admin.txt 中的凭据
-    config = _load_and_merge_credentials(config, config_dir)
+    config = _load_and_merge_envtxt_and_admintxt_to_config(config, config_dir)
 
     return config
