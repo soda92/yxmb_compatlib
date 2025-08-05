@@ -69,6 +69,10 @@ bg_urls = [
   "http://192.168.10.50:8081/phis/static/images/logins/bg-denglu.png",
 ]
 
+[new_follow_up]
+height_weight_from_clinic_record = true # 是否从门诊数据中获取身高和体重, 否的话就从档案里取
+use_clinic_record_other_than_contracted_doctor = false # 是否使用非签约医生的门诊记录 (从env.txt "没有签约医生的门诊记录, 是否需要判别包含机构名称字样的其他医生的门诊记录" 里合并过来）
+
 # 列名别名配置
 # key 是程序内部使用的标准名，value 是 Excel 中可能出现的列名列表
 [column_aliases]
