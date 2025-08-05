@@ -327,6 +327,15 @@ wheels = [
 ]
 
 [[package]]
+name = "phis-config"
+version = "2025.8.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/c7/36/2ee1cedd2f047e37b086adafacbcacec5b105e191a7ba0e27e6af4169a44/phis_config-2025.8.1.0.tar.gz", hash = "sha256:425122262820d9346e7898045788b8123fc1421bedbf64c894f08cfe61745c59", size = 17992, upload-time = "2025-08-01T02:56:18.955Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/44/76/b4ea0d3b6b00a41f8a9333a9bda0baa7b0abb6aaf0abcfcad9430e463d21/phis_config-2025.8.1.0-py3-none-any.whl", hash = "sha256:44c9c9061078e8c64ad11faaa99992018822adede4577ae073573248e0a8ad3b", size = 17923, upload-time = "2025-08-01T02:56:17.754Z" },
+]
+
+[[package]]
 name = "pillow"
 version = "11.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -655,12 +664,13 @@ wheels = [
 
 [[package]]
 name = "yxmb-compatlib"
-version = "2025.8.1.2"
+version = "2025.8.4.1"
 source = { editable = "." }
 dependencies = [
     { name = "ddddocr" },
     { name = "openpyxl" },
     { name = "pandas" },
+    { name = "phis-config" },
     { name = "pyinstaller" },
     { name = "selenium" },
 ]
@@ -670,6 +680,7 @@ requires-dist = [
     { name = "ddddocr", specifier = ">=1.5.6" },
     { name = "openpyxl", specifier = ">=3.1.5" },
     { name = "pandas", specifier = ">=2.3.1" },
+    { name = "phis-config", specifier = ">=2025.8.1.0" },
     { name = "pyinstaller", specifier = ">=6.14.2" },
     { name = "selenium", specifier = ">=4.34.2" },
 ]

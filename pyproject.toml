@@ -11,6 +11,7 @@ dependencies = [
     "ddddocr>=1.5.6",
     "openpyxl>=3.1.5",
     "pandas>=2.3.1",
+    "phis-config>=2025.8.1.0",
     "pyinstaller>=6.14.2",
     "selenium>=4.34.2",
 ]
